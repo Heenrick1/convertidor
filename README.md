@@ -2,6 +2,8 @@
 
 A desktop file-conversion app (in the spirit of Moonvert) built with **Electron**, wrapping:
 
+Note: 100% made with ai, I did not make any part of this code, feel free to do whatever you want with it.
+
 - **FFmpeg** — video/audio conversion, and the "thousands of images → video" tool
 - **ImageMagick** — batch image conversion/resizing
 - **Pandoc** — document conversion (docx, pdf, html, md, epub, odt, txt, rtf)
