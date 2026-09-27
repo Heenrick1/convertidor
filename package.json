@@ -1,0 +1,49 @@
+{
+  "name": "convertidor",
+  "productName": "Convertidor",
+  "version": "1.0.0",
+  "description": "An all-in-one file conversion desktop app (video/audio, images, documents, geospatial) built with FFmpeg, ImageMagick, Pandoc and GeoPandas.",
+  "main": "main.js",
+  "author": "You",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win nsis portable"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.convertidor.app",
+    "productName": "Convertidor",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      { "from": "resources/scripts", "to": "scripts" },
+      { "from": "resources/bin", "to": "bin", "filter": ["**/*"] },
+      { "from": "resources/python", "to": "python", "filter": ["**/*"] }
+    ],
+    "compression": "maximum",
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

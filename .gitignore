@@ -1,0 +1,10 @@
+node_modules/
+release/
+dist/
+*.log
+
+# Fetched at build time by build-tools/fetch-resources.sh — do not commit.
+# (ffmpeg.exe, pandoc.exe, imagemagick-setup.exe, and the portable Python +
+# GeoPandas stack are ~900MB and must never go into git.)
+resources/bin/
+resources/python/

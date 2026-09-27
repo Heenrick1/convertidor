@@ -1,0 +1,44 @@
+name: Build & Release Windows Installer
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch bundled engines (FFmpeg, Pandoc, ImageMagick, Python+GeoPandas)
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x build-tools/fetch-resources.sh
+          build-tools/fetch-resources.sh
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build installer
+        run: npm run dist:win
+
+      - name: Attach installer to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.exe
+          generate_release_notes: true

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Convertidor</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">CV</div>
+        <div class="brand-name">Convertidor</div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-panel="panel-sequence">🎞️ Images → Video</button>
+        <button class="nav-item" data-panel="panel-video">🎬 Video &amp; Audio</button>
+        <button class="nav-item" data-panel="panel-images">🖼️ Images</button>
+        <button class="nav-item" data-panel="panel-docs">📄 Documents</button>
+        <button class="nav-item" data-panel="panel-geo">🌍 Geospatial</button>
+      </nav>
+      <div class="tool-status" id="tool-status">
+        <div class="tool-status-title">Engine status</div>
+        <div class="tool-row" id="row-ffmpeg"><span class="dot"></span>FFmpeg</div>
+        <div class="tool-row" id="row-magick"><span class="dot"></span>ImageMagick</div>
+        <div class="tool-row" id="row-pandoc"><span class="dot"></span>Pandoc</div>
+        <div class="tool-row" id="row-geopandas"><span class="dot"></span>GeoPandas</div>
+      </div>
+    </aside>
+
+    <main class="content">
+
+      <!-- IMAGES -> VIDEO -->
+      <section class="panel active" id="panel-sequence">
+        <h1>Turn thousands of images into a video</h1>
+        <p class="subtitle">Pick a folder or select image files, tune the frame rate / length, and see a live estimate of size and duration before you render.</p>
+
+        <div class="dropzone" id="seq-dropzone">
+          <div class="dropzone-inner">
+            <div class="dz-icon">📂</div>
+            <div><strong>Drag &amp; drop</strong> a folder or images here, or</div>
+            <button class="btn" id="seq-pick-btn">Choose images / folder</button>
+            <div class="dz-count" id="seq-count">No images selected</div>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="card">
+            <h3>Timing</h3>
+            <div class="field-row">
+              <label>
+                <input type="radio" name="seq-mode" value="fps" checked />
+                Set frame rate (fps)
+              </label>
+              <input type="number" id="seq-fps" min="1" max="120" value="30" />
+            </div>
+            <div class="field-row">
+              <label>
+                <input type="radio" name="seq-mode" value="duration" />
+                Set total video length (seconds)
+              </label>
+              <input type="number" id="seq-duration" min="1" value="60" />
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Output</h3>
+            <div class="field-row">
+              <label>Format</label>
+              <select id="seq-format">
+                <option value="mp4">MP4 (H.264) — best compatibility</option>
+                <option value="webm">WebM (VP9) — smaller, web-friendly</option>
+                <option value="gif">Animated GIF — short clips only</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <label>Resolution</label>
+              <select id="seq-resolution">
+                <option value="original">Keep original size</option>
+                <option value="3840x2160">4K (3840×2160)</option>
+                <option value="1920x1080" selected>1080p (1920×1080)</option>
+                <option value="1280x720">720p (1280×720)</option>
+                <option value="custom">Custom…</option>
+              </select>
+            </div>
+            <div class="field-row" id="seq-custom-res" style="display:none">
+              <input type="number" id="seq-w" placeholder="Width" />
+              <input type="number" id="seq-h" placeholder="Height" />
+            </div>
+            <div class="field-row">
+              <label>Quality</label>
+              <select id="seq-quality">
+                <option value="draft">Draft (fast, smaller file)</option>
+                <option value="balanced" selected>Balanced</option>
+                <option value="high">High quality (larger file)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card estimate-card">
+          <h3>Estimate</h3>
+          <div class="estimate-grid">
+            <div><span class="est-label">Frames</span><span class="est-value" id="est-frames">–</span></div>
+            <div><span class="est-label">Duration</span><span class="est-value" id="est-duration">–</span></div>
+            <div><span class="est-label">Effective FPS</span><span class="est-value" id="est-fps">–</span></div>
+            <div><span class="est-label">Estimated size</span><span class="est-value" id="est-size">–</span></div>
+          </div>
+          <p class="est-note">Size is a rough estimate based on resolution, frame rate and quality preset — actual output can vary with image content.</p>
+        </div>
+
+        <div class="run-row">
+          <button class="btn primary" id="seq-run-btn" disabled>Render video</button>
+          <div class="progress-wrap" id="seq-progress-wrap" style="display:none">
+            <div class="progress-bar"><div class="progress-fill" id="seq-progress-fill"></div></div>
+            <span id="seq-progress-label">0%</span>
+          </div>
+        </div>
+        <div class="result" id="seq-result"></div>
+      </section>
+
+      <!-- VIDEO / AUDIO -->
+      <section class="panel" id="panel-video">
+        <h1>Video &amp; Audio Conversion</h1>
+        <p class="subtitle">Powered by FFmpeg. Convert between formats and codecs.</p>
+        <div class="dropzone" id="video-dropzone">
+          <div class="dropzone-inner">
+            <div class="dz-icon">🎬</div>
+            <button class="btn" id="video-pick-btn">Choose video/audio file</button>
+            <div class="dz-count" id="video-filename">No file selected</div>
+          </div>
+        </div>
+        <div class="grid two">
+          <div class="card">
+            <h3>Output format</h3>
+            <select id="video-format">
+              <optgroup label="Video">
+                <option value="mp4">MP4 (H.264)</option>
+                <option value="mkv">MKV (H.264)</option>
+                <option value="webm">WebM (VP9)</option>
+                <option value="mov">MOV (H.264)</option>
+                <option value="avi">AVI</option>
+                <option value="gif">GIF</option>
+              </optgroup>
+              <optgroup label="Audio only">
+                <option value="mp3">MP3</option>
+                <option value="wav">WAV</option>
+                <option value="flac">FLAC</option>
+                <option value="aac">AAC</option>
+                <option value="ogg">OGG (Vorbis)</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="card">
+            <h3>Quality</h3>
+            <div class="field-row">
+              <label>Video quality (CRF, lower = better)</label>
+              <input type="range" id="video-crf" min="15" max="35" value="23" />
+              <span id="video-crf-val">23</span>
+            </div>
+            <div class="field-row">
+              <label>Audio bitrate (kbps)</label>
+              <select id="video-abr">
+                <option value="128">128</option>
+                <option value="192" selected>192</option>
+                <option value="256">256</option>
+                <option value="320">320</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="run-row">
+          <button class="btn primary" id="video-run-btn" disabled>Convert</button>
+          <div class="progress-wrap" id="video-progress-wrap" style="display:none">
+            <div class="progress-bar"><div class="progress-fill" id="video-progress-fill"></div></div>
+            <span id="video-progress-label">0%</span>
+          </div>
+        </div>
+        <div class="result" id="video-result"></div>
+      </section>
+
+      <!-- IMAGES -->
+      <section class="panel" id="panel-images">
+        <h1>Image Conversion</h1>
+        <p class="subtitle">Powered by ImageMagick. Batch-convert and resize images.</p>
+        <div class="dropzone" id="img-dropzone">
+          <div class="dropzone-inner">
+            <div class="dz-icon">🖼️</div>
+            <button class="btn" id="img-pick-btn">Choose images</button>
+            <div class="dz-count" id="img-count">No images selected</div>
+          </div>
+        </div>
+        <div class="grid two">
+          <div class="card">
+            <h3>Output format</h3>
+            <select id="img-format">
+              <option value="png">PNG</option>
+              <option value="jpg">JPG</option>
+              <option value="webp">WebP</option>
+              <option value="bmp">BMP</option>
+              <option value="tiff">TIFF</option>
+            </select>
+            <div class="field-row">
+              <label>JPEG quality</label>
+              <input type="range" id="img-quality" min="10" max="100" value="90" />
+              <span id="img-quality-val">90</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Resize (optional)</h3>
+            <div class="field-row">
+              <label>Scale %</label>
+              <input type="number" id="img-resize-pct" placeholder="e.g. 50" />
+            </div>
+          </div>
+        </div>
+        <div class="run-row">
+          <button class="btn primary" id="img-run-btn" disabled>Convert all</button>
+          <div class="progress-wrap" id="img-progress-wrap" style="display:none">
+            <div class="progress-bar"><div class="progress-fill" id="img-progress-fill"></div></div>
+            <span id="img-progress-label">0%</span>
+          </div>
+        </div>
+        <div class="result" id="img-result"></div>
+      </section>
+
+      <!-- DOCUMENTS -->
+      <section class="panel" id="panel-docs">
+        <h1>Document Conversion</h1>
+        <p class="subtitle">Powered by Pandoc. Convert between document formats.</p>
+        <div class="dropzone" id="doc-dropzone">
+          <div class="dropzone-inner">
+            <div class="dz-icon">📄</div>
+            <button class="btn" id="doc-pick-btn">Choose document</button>
+            <div class="dz-count" id="doc-filename">No file selected</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Output format</h3>
+          <select id="doc-format">
+            <option value="docx">Word (.docx)</option>
+            <option value="pdf">PDF</option>
+            <option value="html">HTML</option>
+            <option value="md">Markdown</option>
+            <option value="epub">EPUB</option>
+            <option value="odt">OpenDocument (.odt)</option>
+            <option value="txt">Plain text</option>
+            <option value="rtf">Rich Text (.rtf)</option>
+          </select>
+        </div>
+        <div class="run-row">
+          <button class="btn primary" id="doc-run-btn" disabled>Convert</button>
+          <div class="progress-wrap" id="doc-progress-wrap" style="display:none">
+            <div class="progress-bar"><div class="progress-fill" id="doc-progress-fill"></div></div>
+            <span id="doc-progress-label">0%</span>
+          </div>
+        </div>
+        <div class="result" id="doc-result"></div>
+      </section>
+
+      <!-- GEOSPATIAL -->
+      <section class="panel" id="panel-geo">
+        <h1>Geospatial Data Conversion</h1>
+        <p class="subtitle">Powered by GeoPandas. Convert and reproject spatial data (requires Python + GeoPandas).</p>
+        <div class="dropzone" id="geo-dropzone">
+          <div class="dropzone-inner">
+            <div class="dz-icon">🌍</div>
+            <button class="btn" id="geo-pick-btn">Choose file (.shp, .geojson, .gpkg, .kml, .csv)</button>
+            <div class="dz-count" id="geo-filename">No file selected</div>
+          </div>
+        </div>
+        <div class="grid two">
+          <div class="card">
+            <h3>Output format</h3>
+            <select id="geo-format">
+              <option value="geojson">GeoJSON</option>
+              <option value="shp">Shapefile (.shp)</option>
+              <option value="gpkg">GeoPackage (.gpkg)</option>
+              <option value="kml">KML</option>
+              <option value="csv">CSV (WKT geometry)</option>
+            </select>
+          </div>
+          <div class="card">
+            <h3>Reprojection (optional)</h3>
+            <input type="text" id="geo-crs" placeholder="e.g. EPSG:4326 or EPSG:3857" />
+          </div>
+        </div>
+        <div class="run-row">
+          <button class="btn primary" id="geo-run-btn" disabled>Convert</button>
+          <div class="progress-wrap" id="geo-progress-wrap" style="display:none">
+            <div class="progress-bar"><div class="progress-fill" id="geo-progress-fill"></div></div>
+            <span id="geo-progress-label">0%</span>
+          </div>
+        </div>
+        <div class="result" id="geo-result"></div>
+      </section>
+
+    </main>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>
