@@ -5,7 +5,7 @@
   "description": "An all-in-one file conversion desktop app (video/audio, images, documents, geospatial) built with FFmpeg, ImageMagick, Pandoc and GeoPandas.",
   "main": "main.js",
   "author": "You",
-  "license": "MIT",
+  "license": "Unlicense",
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder",
@@ -37,13 +37,15 @@
       "target": [
         { "target": "nsis", "arch": ["x64"] },
         { "target": "portable", "arch": ["x64"] }
-      ]
+      ],
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
-    }
+    },
+    "electronLanguages": ["en-US"]
   }
 }

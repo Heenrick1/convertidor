@@ -23,12 +23,14 @@ gh_latest_asset() {
     | grep -E "$pattern" | head -1 | sed -E 's/href="(.*)"/\1/'
 }
 
-# ---------- FFmpeg (static Windows build) ----------
+# ---------- FFmpeg (compact static Windows build, ~79MB vs ~158MB for the full BtbN build) ----------
 if [[ ! -f ../resources/bin/ffmpeg.exe ]]; then
   echo "==> Fetching FFmpeg..."
-  path=$(gh_latest_asset "BtbN/FFmpeg-Builds" "latest" 'win64-gpl-[0-9.]+\.zip"$')
-  curl -s -L -o ffmpeg.zip "https://github.com$path"
-  unzip -o -j ffmpeg.zip "*/bin/ffmpeg.exe" -d ../resources/bin/
+  tag=$(curl -s -L "${AUTH[@]}" "https://github.com/eugeneware/ffmpeg-static/releases/latest" \
+    | grep -oE '/releases/tag/[^"&]*' | grep -v '\*' | head -1 | sed 's#.*/##')
+  curl -s -L -o ffmpeg.gz "https://github.com/eugeneware/ffmpeg-static/releases/download/$tag/ffmpeg-win32-x64.gz"
+  gunzip -f ffmpeg.gz
+  mv ffmpeg ../resources/bin/ffmpeg.exe
 fi
 
 # ---------- Pandoc ----------
@@ -56,7 +58,7 @@ if [[ ! -f ../resources/python/win/python.exe ]]; then
   tag=$(curl -s -L "${AUTH[@]}" "https://github.com/astral-sh/python-build-standalone/releases/latest" \
     | grep -oE '/releases/tag/[0-9]+' | head -1 | sed 's#.*/##')
   path=$(gh_latest_asset "astral-sh/python-build-standalone" "$tag" \
-    'x86_64-pc-windows-msvc-install_only_stripped\.tar\.gz"$')
+    'cpython-3\.12\.[0-9]+\+[0-9]+-x86_64-pc-windows-msvc-install_only_stripped\.tar\.gz"$')
   curl -s -L -o python-win.tar.gz "https://github.com$path"
   mkdir -p pyroot && tar xzf python-win.tar.gz -C pyroot
 
@@ -73,7 +75,19 @@ if [[ ! -f ../resources/python/win/python.exe ]]; then
     python-dateutil pytz six certifi click click-plugins cligj attrs
 
   cp -r site-packages/* pyroot/python/Lib/site-packages/
-  rm -rf pyroot/python/tcl
+  rm -rf pyroot/python/tcl pyroot/python/include pyroot/python/libs pyroot/python/Scripts
+  PYLIB=pyroot/python/Lib
+  rm -rf $PYLIB/test $PYLIB/idlelib $PYLIB/tkinter $PYLIB/turtledemo $PYLIB/turtle.py \
+         $PYLIB/lib2to3 $PYLIB/ensurepip $PYLIB/site-packages/pip $PYLIB/site-packages/setuptools \
+         $PYLIB/site-packages/pkg_resources $PYLIB/site-packages/_distutils_hack
+  rm -f pyroot/python/DLLs/_tkinter.pyd pyroot/python/DLLs/tcl*.dll pyroot/python/DLLs/tk*.dll
+  SP=$PYLIB/site-packages
+  rm -rf $SP/numpy/f2py $SP/numpy/_core/tests $SP/numpy/*/tests $SP/pandas/tests \
+         $SP/shapely/tests $SP/pyproj/tests $SP/geopandas/tests $SP/geopandas/tools/tests
+  find pyroot/python -name "*.pth" -path "*distutils*" -delete 2>/dev/null || true
+  find pyroot/python -name "*.pdb" -delete 2>/dev/null || true
+  find pyroot/python -name "*.lib" -delete 2>/dev/null || true
+  find pyroot/python -name "*.h" -path "*numpy*" -delete 2>/dev/null || true
   find pyroot/python -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
   find pyroot/python/Lib/site-packages -type d -iname "tests" -exec rm -rf {} + 2>/dev/null || true
   rm -rf ../resources/python/win
